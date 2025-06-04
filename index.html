@@ -777,6 +777,35 @@
     background-color: #ff4f4f;
 }
 
+        .info-textopop {
+            width: 100%;
+            margin: 5;
+            /* 左右の余白をなくす */
+            font-size: 13px;
+            color: #000000;
+            line-height: 1.5;
+            text-align: center;
+            word-wrap: break-word;
+            background-color: #eef9f5;
+            padding: 6px;
+            border-radius: 4px;
+            box-sizing: border-box;
+            /* パディングを含めてもはみ出さないように */
+            margin-bottom: 10px;
+            /* 下に10pxの隙間を作る */
+        }
+
+        /* 携帯端末向けのレスポンシブデザイン */
+        @media (max-width: 768px) {
+            .info-text {
+                font-size: 11.5px;
+                /* スマホでは少し小さく */
+                margin-top: 10px;
+                /* 上下のマージンを調整 */
+                line-height: 2.0;
+                /* テキストの高さ調整 */
+            }
+        }
     </style>
 </head>
 
@@ -819,15 +848,16 @@
             <button type="button" onclick="selectSymptom(this, 'treatment1')" data-price="15000">節句写真</button>
             <button type="button" onclick="selectSymptom(this, 'treatment1')" data-price="15000">プロフィール写真</button>
         </div>
-        <div class="highlight-background">
-            <span class="highlight-text">選択肢</span>
+
+        <label id="repairLabel"></label>
+        <div id="repairButtons" class="irradiations">
+            <div class="info-textopop">以下の選択をお選びください。</div>
+            <button type="button" id="irradiation1" onclick="selectirradiations(this)">ビジネス</button>
+            <button type="button" id="irradiation2" onclick="selectirradiations(this)">婚活</button>
+            <button type="button" id="irradiation3" onclick="selectirradiations(this)">オーディション</button>
+            <button type="button" id="irradiation4" onclick="selectirradiations(this)">宣材写真</button>
         </div>
-        <div class="irradiations">
-            <button type="button" id="firstirradiations" onclick="selectirradiations(this)" data-price="1500">ビジネス</button>
-            <button type="button" id="repeatirradiations" onclick="selectirradiations(this)" data-price="150">婚活</button>
-            <button type="button" id="sanirradiations" onclick="selectirradiations(this)" data-price="150">オーディション</button>
-            <button type="button" id="sanirradiations" onclick="selectirradiations(this)" data-price="150">宣材写真</button>
-        </div>
+
 
         <div class="highlight-background">
             <div class="kibounitizi">希望日時<span class="required">必須</span></div>
@@ -882,7 +912,7 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             liff.init({
-                liffId: '2005254357-zKma9BZk'
+                liffId: '2007524129-bAl0pElm'
             }).then(() => {
                 console.log('LIFF初期化成功');
             }).catch((err) => {
@@ -1089,12 +1119,44 @@
 
             // 選択されたオプションを取得
             const updatedSelectedButtons = document.querySelectorAll('.symptoms button.active');
+            const selectedSymptoms = Array.from(updatedSelectedButtons).map(btn => btn.textContent);
+
+            // repair／baind のラベル・ボタン取得
+            const repairLabel = document.getElementById('repairLabel');
+            const repairButtons = document.getElementById('repairButtons');
+
+// repairLabelとrepairButtonsの制御
+const hasBubunDatsumou = button.textContent === 'プロフィール写真';
+
+if (hasBubunDatsumou) {
+    // 表示させる処理（元のまま）
+    button.insertAdjacentElement("afterend", repairLabel);
+    repairLabel.insertAdjacentElement("afterend", repairButtons);
+    repairLabel.style.display = 'block';
+    repairButtons.style.display = 'flex';
+} else {
+    // 非表示にする（1回のクリックで確実に消す）
+    repairLabel.style.display = 'none';
+    repairButtons.style.display = 'none';
+
+    // irradiations 選択もリセット
+    const irradiationButtons = document.querySelectorAll('.irradiations button.active');
+    irradiationButtons.forEach(btn => btn.classList.remove('active'));
+    irradiationsCount = '';
+    selectedirradiationsTime = 0;
+    optionsPrice = 0;
+}
 
             if (updatedSelectedButtons.length === 0) {
                 // すべてのボタンの選択が解除された場合、メニュー時間を0にリセット
                 selectedMenuTime = 0;
                 selectedSymptom = null; // 選択されたメニューをリセット
                 menuPrice = 0; // メニュー価格をリセット
+                treatmentText.style.display = 'none';
+                // repairButtons も非表示にする
+                repairLabel.style.display = 'none';
+                repairButtons.style.display = 'none';
+                return; // ここで処理を終了
             } else {
                 // 1つだけ選択状態にする
                 if (updatedSelectedButtons.length > 1) {
@@ -1168,42 +1230,43 @@
             updateDisplayInfo();
         }
 
-        function selectirradiations(button) {
-            // 選択された日時をリセット
-            selectedFullDate = '';
+function selectirradiations(button) {
+    // 選択された日時をリセット
+    selectedFullDate = '';
 
-            // ボタンの選択状態を切り替える
-            button.classList.toggle('active');
+    // 他のすべてのボタンの選択を解除
+    const allButtons = document.querySelectorAll('.irradiations button');
+    allButtons.forEach(btn => btn.classList.remove('active'));
 
-            // 選択されたオプションを取得
-            const selectedButtons = document.querySelectorAll('.irradiations button.active');
-            const selectedIrradiations = Array.from(selectedButtons).map(btn => btn.innerText);
-            irradiationsCount = selectedIrradiations.join(', ');
+    // クリックしたボタンだけを選択状態にする
+    button.classList.add('active');
 
-            // すべてのオプションの価格を再計算
-            optionsPrice = 0; // 全体をリセットして再計算
-            let totalirradiationsTime = 0; // 選択されたすべてのオプションの合計時間
-            selectedButtons.forEach(btn => {
-                const price = parseInt(btn.getAttribute('data-price'), 10);
-                optionsPrice += price;
+    // 選択されたオプションを取得
+    const selectedButtons = document.querySelectorAll('.irradiations button.active');
+    const selectedIrradiations = Array.from(selectedButtons).map(btn => btn.innerText);
+    irradiationsCount = selectedIrradiations.join(', ');
 
-                // 各オプションの時間を加算
-                const irradiationName = btn.innerText;
-                const irradiationTime = irradiationsTimes[irradiationName] || 0;
-                totalirradiationsTime += irradiationTime;
-            });
+    // オプション価格と時間を再計算
+    optionsPrice = 0;
+    let totalirradiationsTime = 0;
+    selectedButtons.forEach(btn => {
+        const price = parseInt(btn.getAttribute('data-price'), 10);
+        optionsPrice += price;
 
-            // selectedirradiationsTimeに合計時間を設定
-            selectedirradiationsTime = totalirradiationsTime;
+        const irradiationName = btn.innerText;
+        const irradiationTime = irradiationsTimes[irradiationName] || 0;
+        totalirradiationsTime += irradiationTime;
+    });
 
-            console.log('選択されたオプションの合計時間:', selectedirradiationsTime);
+    selectedirradiationsTime = totalirradiationsTime;
+    console.log('選択されたオプションの合計時間:', selectedirradiationsTime);
 
-            // カレンダーを更新するために取得する日付を渡す
-            fetchAvailability(currentDate);
+    // カレンダーを更新
+    fetchAvailability(currentDate);
 
-            // 表示を更新
-            updateDisplayInfo();
-        }
+    // 表示を更新
+    updateDisplayInfo();
+}
 
         function updateTotalAmount() {
             totalAmount = menuPrice + optionsPrice; // オプションの価格も含める
@@ -1322,16 +1385,24 @@
                 return;
             }
 
-            // LINEトークにメッセージを送信
-            liff.sendMessages([{
-                type: 'text',
-                text: `【予約フォーム】\n≪お名前≫\n・${formData.name}\n\n≪お名前よみがな≫\n・${formData.nameyomigana}\n\n≪電話番号≫\n・${formData.phone}\n\n≪ご予約内容≫\n・${formData.selectedSymptom}\n≪選択肢≫\n・${formData.irradiationsCount}\n\n【希望日時】：\n・第一希望日\n${formatDate(formData.dates[0])}\n\n・第二希望日\n${formatDate(formData.dates[1])}\n\n・第三希望日\n${formatDate(formData.dates[2])}\n\n≪メッセージ≫\n・${formData.message}`
-            }]).then(() => {
-                alert('当日キャンセルは無いようにお願いいたします。');
-                liff.closeWindow();
-            }).catch((err) => {
-                console.error('メッセージの送信に失敗しました', err);
-            });
+// LINEトークにメッセージを送信
+let message = `【予約フォーム】\n≪お名前≫\n・${formData.name}\n\n≪お名前よみがな≫\n・${formData.nameyomigana}\n\n≪電話番号≫\n・${formData.phone}\n\n≪ご予約内容≫\n・${formData.selectedSymptom}`;
+
+if (formData.irradiationsCount && formData.irradiationsCount.trim() !== '') {
+    message += `\n≪選択肢≫\n・${formData.irradiationsCount}`;
+}
+
+message += `\n\n【希望日時】\n・第一希望日\n${formatDate(formData.dates[0])}\n\n・第二希望日\n${formatDate(formData.dates[1])}\n\n・第三希望日\n${formatDate(formData.dates[2])}\n\n≪メッセージ≫\n・${formData.message}`;
+
+liff.sendMessages([{
+    type: 'text',
+    text: message
+}]).then(() => {
+    alert('当日キャンセルは無いようにお願いいたします。');
+    liff.closeWindow();
+}).catch((err) => {
+    console.error('メッセージの送信に失敗しました', err);
+});
         }
 
         function formatDate(datetime) {
